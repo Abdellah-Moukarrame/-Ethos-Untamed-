@@ -1,0 +1,29 @@
+<svg width="234" height="312" viewBox="0 0 234 312" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="168" width="234" height="144" fill="url(#paint0_linear_1_829)" fill-opacity="0.2"/>
+<rect x="161" y="268" width="2.74095" height="2.74095" fill="#FFEA31"/>
+<rect x="11.1" y="6.1" width="210.8" height="289.8" stroke="white" stroke-opacity="0.33" stroke-width="0.2"/>
+<rect x="1" width="233" height="312" fill="#CDCDCD" fill-opacity="0.08"/>
+<rect width="8" height="1" transform="matrix(-1 0 0 1 222 6)" fill="#D9D9D9"/>
+<rect x="11" y="6" width="8" height="1" fill="#D9D9D9"/>
+<rect x="11" y="14" width="8" height="1" transform="rotate(-90 11 14)" fill="#D9D9D9"/>
+<rect x="222" y="296" width="8" height="1" transform="rotate(180 222 296)" fill="#D9D9D9"/>
+<rect x="222" y="288" width="8" height="1" transform="rotate(90 222 288)" fill="#D9D9D9"/>
+<rect width="8" height="1" transform="matrix(1 0 0 -1 11 296)" fill="#D9D9D9"/>
+<rect width="8" height="1" transform="matrix(-4.37114e-08 1 1 4.37114e-08 11 288)" fill="#D9D9D9"/>
+<rect width="8" height="1" transform="matrix(4.37114e-08 -1 -1 -4.37114e-08 222 14)" fill="#D9D9D9"/>
+<g filter="url(#filter0_f_1_829)">
+<path d="M80.0114 158H69.3554L49.4834 119.888V158H39.4034V100.592H50.2514L69.9314 139.184V100.592H80.0114V158ZM137.552 110.192H111.632V124.688H135.824V134.288H111.632V158H101.552V100.592H137.552V110.192ZM194.782 110.192H179.23V158H169.15V110.192H153.598V100.592H194.782V110.192Z" fill="white"/>
+</g>
+<path d="M80.0114 158H69.3554L49.4834 119.888V158H39.4034V100.592H50.2514L69.9314 139.184V100.592H80.0114V158ZM137.552 110.192H111.632V124.688H135.824V134.288H111.632V158H101.552V100.592H137.552V110.192ZM194.782 110.192H179.23V158H169.15V110.192H153.598V100.592H194.782V110.192Z" fill="white"/>
+<defs>
+<filter id="filter0_f_1_829" x="35.4043" y="96.592" width="163.377" height="65.408" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="2" result="effect1_foregroundBlur_1_829"/>
+</filter>
+<linearGradient id="paint0_linear_1_829" x1="117" y1="194.761" x2="117" y2="392" gradientUnits="userSpaceOnUse">
+<stop stop-color="#D9D9D9" stop-opacity="0"/>
+<stop offset="1" stop-color="#FFEA31"/>
+</linearGradient>
+</defs>
+</svg>
