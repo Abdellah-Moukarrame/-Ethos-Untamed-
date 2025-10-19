@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Converter</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #007aff;
+            --primary-light: #e6f2ff;
+            --primary-hover: #0056b3;
+            --success-color: #34c759;
+            --success-light: #e6f7eb;
+            --success-hover: #2a9e47;
+            --danger-color: #ff3b30;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #1c1c1e;
+            --text-light: #6b6b6b;
+            --border-color: #e0e0e0;
+            --border-dashed: #c7c7c7;
+        }
+
+        /* --- Basic Setup --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .converter-container {
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        .converter-header {
+            text-align: center;
+            padding: 2rem 2rem 1.5rem 2rem;
+        }
+        
+        h1 {
+            font-weight: 700;
+            color: var(--text-color);
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* --- Mode Toggle Switch --- */
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            background-color: #f0f0f0;
+            border-radius: 12px;
+            position: relative;
+            padding: 4px;
+        }
+        
+        .mode-toggle input {
+            display: none;
+        }
+        
+        .mode-toggle label {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 1;
+            transition: color 0.3s ease;
+            color: var(--text-light);
+        }
+        
+        .mode-toggle input:checked + label {
+            color: var(--primary-hover);
+        }
+        
+        .toggle-pill {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        #mode-folder:checked ~ .toggle-pill {
+            transform: translateX(100%);
+        }
+
+        /* --- Main Content Area --- */
+        .converter-body {
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        /* --- State 1: Upload --- */
+        #state-upload {
+            text-align: center;
+            border: 2px dashed var(--border-dashed);
+            border-radius: 16px;
+            padding: 3rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background-color: #fcfcfc;
+        }
+        
+        #state-upload.dragover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+        }
+        
+        #state-upload .upload-icon {
+            width: 50px;
+            height: 50px;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        #state-upload h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        #state-upload p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+        
+        #fileInput {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        /* --- State 2: Configure --- */
+        #state-configure {
+            display: none; /* Hidden by default */
+        }
+
+        /* Thumbnail Grid */
+        #file-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 1rem;
+            max-height: 250px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .thumbnail {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Fallback icon for non-image thumbs */
+        .thumbnail-icon {
+            width: 40%;
+            height: 40%;
+            color: var(--text-light);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .thumbnail .file-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 0.7rem;
+            padding: 4px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* In single mode, make preview larger */
+        #state-configure.single-file-mode #file-preview-grid {
+            grid-template-columns: 1fr;
+            max-height: 300px;
+        }
+        #state-configure.single-file-mode .thumbnail .file-name {
+            display: none;
+        }
+
+        /* Options Panel */
+        .options-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 500px) {
+            .options-panel {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+        
+        .options-panel.full {
+             grid-template-columns: 1fr;
+        }
+        
+        .options-panel .field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .options-panel select, .options-panel input[type="range"] {
+            width: 100%;
+        }
+        
+        select {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+            background-color: var(--card-bg);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b6b6b' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 16px;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: #eee;
+            border-radius: 5px;
+            outline: none;
+            padding: 0;
+            margin-top: 8px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        #quality-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-light);
+        }
+        .btn-secondary:hover {
+            background-color: #d1d1d1;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        /* --- State 3: Processing (Integrated Progress Button) --- */
+        .btn-progress {
+            background-color: #ddd;
+            color: var(--text-color);
+        }
+        
+        .btn-progress .btn-text {
+            z-index: 2;
+            position: relative;
+        }
+        
+        .progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background-color: var(--success-light);
+            border-right: 2px solid var(--success-color);
+            transition: width 0.3s ease-in-out;
+            z-index: 1;
+        }
+        
+        .converter-container.is-processing {
+            pointer-events: none;
+        }
+        .converter-container.is-processing #convertBtn {
+            cursor: not-allowed;
+        }
+
+        /* --- State 4: Complete --- */
+        #state-complete {
+            display: none; /* Hidden by default */
+            text-align: center;
+            padding: 2rem 0;
+        }
+        
+        #state-complete .complete-icon {
+            width: 80px;
+            height: 80px;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+        }
+        
+        #state-complete h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        #state-complete p {
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="converter-container" id="converter">
+        
+        <div class="converter-header">
+            <h1>Image Converter</h1>
+            
+            <div class="mode-toggle">
+                <input type="radio" name="uploadMode" id="mode-single" value="single" checked>
+                <label for="mode-single">Single</label>
+                
+                <input type="radio" name="uploadMode" id="mode-folder" value="folder">
+                <label for="mode-folder">Batch</label>
+                
+                <div class="toggle-pill"></div>
+            </div>
+        </div>
+
+        <div class="converter-body">
+        
+            <div id="state-upload">
+                <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3 13.5v-6c0-.621.504-1.125 1.125-1.125H9.75v-1.5a3.375 3.375 0 013.375-3.375h1.5a3.375 3.375 0 013.375 3.375v1.5h5.625c.621 0 1.125.504 1.125 1.125v6m-21 0c0 .621.504 1.125 1.125 1.125h18.75c.621 0 1.125-.504 1.125-1.125m-21 0v-6m21 0v6m-21 0h18.75" />
+                </svg>
+                <h3 id="dropZoneText">Drag & Drop file</h3>
+                <p id="dropZoneSubtext">or click to browse</p>
+                <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/avif,image/svg+xml">
+            </div>
+            
+            <div id="state-configure">
+                <div id="file-preview-grid">
+                    </div>
+                
+                <fieldset class.="options-wrapper" id="optionsWrapper">
+                    <div class="options-panel" id="optionsGrid">
+                        <div class="field">
+                            <label for="format">Convert to:</label>
+                            <select id="format">
+                                <option value="image/png">PNG</option>
+                                <option value="image/jpeg">JPEG</option>
+                                <option value="image/webp">WEBP</option>
+                                <option value="image/avif">AVIF</option>
+                            </select>
+                        </div>
+                        
+                        <div class="field" id="qualitySection">
+                            <label id="quality-label" for="quality">
+                                <span>Quality</span>
+                                <span id="qualityValue">90%</span>
+                            </label>
+                            <input type="range" id="quality" min="0.1" max="1.0" value="0.9" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="clearBtn">Clear</button>
+                        <button class="btn btn-primary" id="convertBtn">
+                            <span class="btn-text">Convert</span>
+                            <div class="progress-fill"></div>
+                        </button>
+                    </div>
+                </fieldset>
+            </div>
+            
+            <div id="state-complete">
+                <svg class="complete-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h2 id="completeTitle">Conversion Complete!</h2>
+                <p id="completeMessage">Your file is ready to download.</p>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="resetBtn">Start Over</button>
+                    <button class="btn btn-primary" id="downloadBtn">Download</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <svg id="fileIconTemplate" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+
+    <script>
+        // --- Global Variables & Element References ---
+        let currentMode = 'single';
+        let uploadedFiles = [];
+        let finalDownloadBlob = null;
+        let finalDownloadName = '';
+        
+        const converter = document.getElementById('converter');
+        const modeRadios = document.querySelectorAll('input[name="uploadMode"]');
+        
+        const stateUpload = document.getElementById('state-upload');
+        const stateConfigure = document.getElementById('state-configure');
+        const stateComplete = document.getElementById('state-complete');
+        
+        const fileInput = document.getElementById('fileInput');
+        const dropZoneText = document.getElementById('dropZoneText');
+        const dropZoneSubtext = document.getElementById('dropZoneSubtext');
+        
+        const previewGrid = document.getElementById('file-preview-grid');
+        const optionsWrapper = document.getElementById('optionsWrapper');
+        const optionsGrid = document.getElementById('optionsGrid');
+        
+        const convertBtn = document.getElementById('convertBtn');
+        const convertBtnText = convertBtn.querySelector('.btn-text');
+        const progressFill = convertBtn.querySelector('.progress-fill');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const completeTitle = document.getElementById('completeTitle');
+        const completeMessage = document.getElementById('completeMessage');
+        
+        const formatSelect = document.getElementById('format');
+        const qualitySection = document.getElementById('qualitySection');
+        const qualitySlider = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        
+        // --- Event Listeners ---
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                currentMode = e.target.value;
+                updateUIMode();
+                resetUploader();
+            });
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            stateUpload.addEventListener(eventName, preventDefaults, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            stateUpload.addEventListener(eventName, () => stateUpload.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            stateUpload.addEventListener(eventName, () => stateUpload.classList.remove('dragover'), false);
+        });
+
+        stateUpload.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect);
+        convertBtn.addEventListener('click', handleConvert);
+        clearBtn.addEventListener('click', resetUploader);
+        downloadBtn.addEventListener('click', triggerDownload);
+        resetBtn.addEventListener('click', resetUploader);
+        
+        formatSelect.addEventListener('change', toggleQualitySlider);
+        qualitySlider.addEventListener('input', () => {
+            qualityValue.textContent = `${Math.round(qualitySlider.value * 100)}%`;
+        });
+
+        // --- Core Functions ---
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        /**
+         * Updates UI text and input based on "Single" or "Batch" mode
+         */
+        function updateUIMode() {
+            if (currentMode === 'single') {
+                dropZoneText.textContent = 'Drag & Drop file';
+                dropZoneSubtext.textContent = 'or click to browse';
+                fileInput.accept = 'image/png,image/jpeg,image/webp,image/avif,image/svg+xml';
+                fileInput.multiple = false;
+                fileInput.webkitdirectory = false;
+            } else {
+                dropZoneText.textContent = 'Drag & Drop files or folder';
+                dropZoneSubtext.textContent = 'or click to browse';
+                fileInput.accept = '';
+                fileInput.multiple = true;
+                fileInput.webkitdirectory = true;
+            }
+        }
+
+        function handleFileSelect(e) {
+            processFiles(e.target.files);
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (currentMode === 'single' && files.length > 1) {
+                showError("Please drop only one file in Single mode.");
+                return;
+            }
+            processFiles(files);
+        }
+
+        /**
+         * Validates files and moves to the Configure state
+         */
+        function processFiles(files) {
+            const fileFilter = file => file.type.startsWith('image/') || file.name.endsWith('.svg');
+            
+            let validFiles;
+            if (currentMode === 'single') {
+                if (!fileFilter(files[0])) {
+                    showError("Please upload a valid image file.");
+                    return;
+                }
+                validFiles = [files[0]];
+                stateConfigure.classList.add('single-file-mode');
+            } else {
+                validFiles = Array.from(files).filter(fileFilter);
+                if (validFiles.length === 0) {
+                    showError("No valid image files found.");
+                    return;
+                }
+                stateConfigure.classList.remove('single-file-mode');
+            }
+            
+            uploadedFiles = validFiles;
+            populatePreviewGrid(uploadedFiles);
+            
+            // Transition to Configure state
+            stateUpload.classList.add('hidden');
+            stateConfigure.style.display = 'block';
+            stateComplete.style.display = 'none';
+            toggleQualitySlider();
+        }
+
+        /**
+         * Creates the thumbnail grid
+         */
+        function populatePreviewGrid(files) {
+            previewGrid.innerHTML = '';
+            files.forEach(file => {
+                const thumb = document.createElement('div');
+                thumb.className = 'thumbnail';
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    thumb.style.backgroundImage = `url(${e.target.result})`;
+                };
+                
+                if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+                    reader.readAsDataURL(file); // Most browsers can preview SVGs
+                } else {
+                    // Fallback for file types browsers can't preview (e.g., AVIF in Safari)
+                    const icon = document.getElementById('fileIconTemplate').cloneNode(true);
+                    icon.style.display = 'block';
+                    icon.classList.add('thumbnail-icon');
+                    thumb.appendChild(icon);
+                }
+                
+                const name = document.createElement('span');
+                name.className = 'file-name';
+                name.textContent = file.name;
+                thumb.appendChild(name);
+                
+                previewGrid.appendChild(thumb);
+            });
+        }
+
+        /**
+         * Main "Convert" button handler
+         */
+        async function handleConvert() {
+            converter.classList.add('is-processing');
+            convertBtn.classList.add('btn-progress');
+            progressFill.style.width = '0%';
+            optionsWrapper.disabled = true;
+
+            const selectedFormat = formatSelect.value;
+            const quality = parseFloat(qualitySlider.value);
+            
+            try {
+                if (currentMode === 'single') {
+                    const file = uploadedFiles[0];
+                    convertBtnText.textContent = 'Converting...';
+                    
+                    const blob = await convertFile(file, selectedFormat, quality);
+                    
+                    progressFill.style.width = '100%';
+                    finalDownloadBlob = blob;
+                    finalDownloadName = file.name.split('.').slice(0, -1).join('.') + '.' + selectedFormat.split('/')[1];
+                    showCompleteState(`1 file converted successfully!`);
+                    
+                } else {
+                    const zip = new JSZip();
+                    let filesProcessed = 0;
+                    
+                    for (const file of uploadedFiles) {
+                        try {
+                            const blob = await convertFile(file, selectedFormat, quality);
+                            const newExtension = selectedFormat.split('/')[1];
+                            const newFileName = file.name.split('.').slice(0, -1).join('.') + '.' + newExtension;
+                            zip.file(newFileName, blob);
+                        } catch (err) {
+                            console.warn(`Could not convert ${file.name}: ${err.message}`);
+                        }
+                        
+                        filesProcessed++;
+                        const percent = Math.round((filesProcessed / uploadedFiles.length) * 100);
+                        convertBtnText.textContent = `Converting... ${percent}%`;
+                        progressFill.style.width = `${percent}%`;
+                    }
+                    
+                    if (filesProcessed === 0) {
+                        showError("No files could be converted.");
+                        resetUploader(); // Go back to start
+                        return;
+                    }
+                    
+                    convertBtnText.textContent = 'Zipping...';
+                    const zipBlob = await zip.generateAsync({ type: "blob" });
+                    
+                    finalDownloadBlob = zipBlob;
+                    finalDownloadName = 'converted_images.zip';
+                    showCompleteState(`${filesProcessed} / ${uploadedFiles.length} files converted.`);
+                }
+                
+            } catch (error) {
+                console.error("Conversion error:", error);
+                showError('An error occurred. Please try again.');
+                resetUploader();
+            }
+        }
+        
+        /**
+         * Transitions to the final "Download" state
+         */
+        function showCompleteState(message) {
+            completeTitle.textContent = "Conversion Complete!";
+            completeMessage.textContent = message;
+            stateConfigure.style.display = 'none';
+            stateComplete.style.display = 'block';
+        }
+
+        /**
+         * The core conversion logic for a single file
+         */
+        function convertFile(file, format, quality) {
+            return new Promise((resolve, reject) => {
+                const fileReader = new FileReader();
+                fileReader.readAsDataURL(file);
+                
+                fileReader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.naturalWidth || img.width;
+                        let h = img.naturalHeight || img.height;
+                        if (w === 0 || h === 0) { w = 300; h = 150; }
+
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const inputType = file.type || '';
+                        const inputExt = file.name.split('.').pop().toLowerCase();
+                        const hasTransparency = (inputType === 'image/png' || inputType === 'image/svg+xml' || inputExt === 'svg');
+                        const needsBackground = (format === 'image/jpeg' || format === 'image/avif');
+
+                        if (hasTransparency && needsBackground) {
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        }
+                        
+                        ctx.drawImage(img, 0, 0, w, h);
+                        canvas.toBlob(
+                            (blob) => {
+                                if (blob) {
+                                    resolve(blob);
+                                } else {
+                                    reject(new Error('Canvas toBlob failed.'));
+                                }
+                            },
+                            format,
+                            quality
+                        );
+                    };
+                    img.onerror = () => reject(new Error('Image failed to load.'));
+                };
+                fileReader.onerror = () => reject(new Error('File failed to read.'));
+            });
+        }
+        
+        /**
+         * Triggers the browser download
+         */
+        function triggerDownload() {
+            if (!finalDownloadBlob) return;
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(finalDownloadBlob);
+            a.download = finalDownloadName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        }
+
+        // --- Utility Functions ---
+        
+        /**
+         * Resets the entire interface to State 1
+         */
+        function resetUploader() {
+            uploadedFiles = [];
+            finalDownloadBlob = null;
+            finalDownloadName = '';
+            fileInput.value = null;
+            
+            // Reset states
+            stateUpload.classList.remove('hidden');
+            stateConfigure.style.display = 'none';
+            stateComplete.style.display = 'none';
+            
+            // Reset button
+            converter.classList.remove('is-processing');
+            optionsWrapper.disabled = false;
+            convertBtn.classList.remove('btn-progress');
+            convertBtnText.textContent = 'Convert';
+            progressFill.style.width = '0%';
+        }
+        
+        /**
+         * Shows a temporary error message (not implemented yet, but good for UX)
+         */
+        function showError(message) {
+            alert(message); // Simple alert, can be replaced with a modal
+        }
+
+        function toggleQualitySlider() {
+            const format = formatSelect.value;
+            if (format === 'image/jpeg' || format === 'image/webp' || format === 'image/avif') {
+                qualitySection.style.display = 'block';
+                optionsGrid.classList.remove('full');
+            } else {
+                qualitySection.style.display = 'none';
+                optionsGrid.classList.add('full');
+            }
+        }
+        
+        // --- Initial Setup ---
+        updateUIMode();
+        toggleQualitySlider();
+    </script>
+
+</body>
+</html>

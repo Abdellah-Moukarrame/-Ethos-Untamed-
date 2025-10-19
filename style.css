@@ -233,7 +233,9 @@ nav {
 
 .nav-ul {
   display: flex;
+  position: fixed;
   width: 90%;
+  height: 10%;
   align-items: center;
   justify-content: space-between;
   color: #fff;
@@ -1167,14 +1169,13 @@ aside a {
   color: #ffffff;
 }
 
-.sharedbuttons{
+.sharedbuttons {
   display: flex;
   position: absolute;
   gap: 3rem;
   bottom: -130px;
-  
 }
-.sharedbuttons a:nth-child(1){
+.sharedbuttons a:nth-child(1) {
   border: 1px white solid;
   color: white;
   text-align: center;
@@ -1186,7 +1187,7 @@ aside a {
   margin: 20px;
   background: #dece3c45;
 }
-.sharedbuttons a:nth-child(2){
+.sharedbuttons a:nth-child(2) {
   border: 1px white solid;
   color: white;
   text-align: center;
@@ -1200,7 +1201,7 @@ aside a {
 }
 /*character*/
 .story-pagination-character {
-  color: #31CBFF;
+  color: #31cbff;
   font-family: "Blender Pro";
   font-size: 13px;
   font-style: normal;
@@ -1212,7 +1213,7 @@ aside a {
   content: "";
   width: 6px;
   height: 6px;
-  background: #31CBFF;
+  background: #31cbff;
   display: inline-block;
   margin-right: 0.3rem;
   margin-bottom: 0.09rem;
@@ -1231,7 +1232,7 @@ aside a {
   display: inline;
 }
 .title-character mark {
-  background-color: #31CBFF;
+  background-color: #31cbff;
 }
 .loading-character h2 {
   text-transform: uppercase;
@@ -1260,23 +1261,22 @@ aside a {
   width: 790px;
   position: absolute;
   opacity: 1;
-  background-color: #31CBFF;
+  background-color: #31cbff;
 }
 .loadingprocess-character div:nth-child(2) {
   height: 15px;
   width: 40px;
   position: absolute;
   left: 908px;
-  background-color: #31CBFF;
+  background-color: #31cbff;
   margin-top: -6px;
 }
-.startthegame{
+.startthegame {
   display: flex;
   position: absolute;
   bottom: -200px;
-  
 }
-.startthegame a{
+.startthegame a {
   border: 1px white solid;
   color: black;
   text-align: center;
@@ -1286,7 +1286,7 @@ aside a {
   text-transform: uppercase;
   padding: 10px;
   margin: 20px;
-  background: #31CBFF;
+  background: #31cbff;
 }
 .characterimages {
   display: flex;
@@ -1307,12 +1307,58 @@ aside a {
   top: 433px;
   left: 340px;
 }
-.characterimages img:nth-child(3){
+.characterimages img:nth-child(3) {
   height: 200px;
-  width:600px;
+  width: 600px;
 }
-.characterimages img:nth-child(2){
+.characterimages img:nth-child(2) {
   height: 500px;
-  width:300px;
+  width: 300px;
   padding-bottom: 100px;
+}
+#modal {
+  border: 1px solid #eaeaea;
+  border-radius: 16px;
+  position: absolute;
+  justify-content: center;
+  align-items: center;
+  visibility: hidden;
+  background-color: rgba(52, 50, 50, 0.839);
+  height: 200px;
+}
+#modal h3 {
+  color: rgba(255, 234, 49, 1);
+  padding: 30px 40px 40px 30px;
+}
+#modal:target {
+  visibility: visible;
+  opacity: 1;
+  transition: all;
+  transition-duration: 1s;
+  transform: scale(1.5);
+}
+.imagesofmodal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 35px;
+}
+.closebutton {
+  position: absolute;
+  top: 0;
+  font-weight: 900;
+  text-decoration: none;
+  color: goldenrod;
+  font-size: 35px;
+}
+.sharecodebutton {
+  border: 1px white solid;
+  position: absolute;
+  right: 42%;
+  bottom: 10px;
+  color: white;
+  text-align: center;
+  font-family: Orbitron;
+  text-transform: uppercase;
+  background: rgba(216, 238, 106, 0.563);
 }
